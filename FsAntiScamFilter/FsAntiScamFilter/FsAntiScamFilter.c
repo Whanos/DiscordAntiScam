@@ -566,6 +566,7 @@ Return Value:
 
 --*/
 {
+    DbgPrint("AntiScamFilter Entry!");
     NTSTATUS status;
 
     UNREFERENCED_PARAMETER( RegistryPath );
@@ -635,29 +636,31 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-int IsReadAllowed(PEPROCESS Process) {
+int IsReadAllowed(PEPROCESS Process, UNICODE_STRING FileName) {
+
+    int allowRead = 1; // 1 is yeah 0 is nah
+
+    KdPrint(("FileName: %wZ\n", FileName));
+
     int currentProcess = PsGetCurrentProcess() == Process;
     HANDLE hProcess;
-    if (currentProcess) {
-        hProcess = NtCurrentProcess();
-    }
-    else {
-        auto status = ObOpenObjectByPointer(
-            Process, // Object (Process)
-            OBJ_KERNEL_HANDLE, // Handle attributes
-            NULL, // PassedAccessState
-            0, // DesiredAccess
-            NULL, // ObjectType
-            KernelMode, // AccessMode
-            &hProcess // Handle
-        );
-        if (!NT_SUCCESS(status)) {
-            return 1;
-        }
-    }
+    hProcess = NtCurrentProcess();
+    //else {
+    //    auto status = ObOpenObjectByPointer(
+    //        Process, // Object (Process)
+    //        OBJ_KERNEL_HANDLE, // Handle attributes
+    //        NULL, // PassedAccessState
+    //        0, // DesiredAccess
+    //        NULL, // ObjectType
+    //        KernelMode, // AccessMode
+    //        &hProcess // Handle
+    //    );
+    //    if (!NT_SUCCESS(status)) {
+    //        return 1;
+    //    }
+    //}
 
     auto size = 400;
-    int allowRead = 0;
     UNICODE_STRING* processName = (UNICODE_STRING*)ExAllocatePool(PagedPool, size);
 
     if (processName) {
@@ -667,9 +670,13 @@ int IsReadAllowed(PEPROCESS Process) {
 
         if (NT_SUCCESS(status)) {
             KdPrint(("Read operation from %wZ\n", processName));
+
+            if (wcsstr(processName->Buffer, L"\\") != NULL) {
+                allowRead = 1;
+            }
         }
-        ExFreePool(processName);
     }
+    ExFreePool(processName);
     return allowRead;
 }
 
@@ -725,7 +732,7 @@ Return Value:
 
     UNREFERENCED_PARAMETER(fileName);
 
-    if (IsReadAllowed(PsGetCurrentProcess) == 0) {
+    if (IsReadAllowed(PsGetCurrentProcess, fileName) == 0) {
         Data->IoStatus.Status = STATUS_ACCESS_DENIED;
         status = FLT_PREOP_COMPLETE;
         KdPrint(("Prevented read!"));

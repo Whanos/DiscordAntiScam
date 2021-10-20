@@ -40,6 +40,10 @@ FsAntiScamFilter/FsAntiScamFilter/Release/**
 FsAntiScamFilter/Release/**
 FsAntiScamFilter/FsAntiScamFilter/Debug/**
 FsAntiScamFilter/Debug/**
+FsAntiScamFilter/x64/**
+FsAntiScamFilter/x64/Release/**
+FsAntiScamFilter/FsAntiScamFilter/x64/Release/**
 *.tlog
 *.log
 *.pdb
+
