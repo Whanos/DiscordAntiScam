@@ -645,6 +645,7 @@ int IsReadAllowed(PEPROCESS Process, UNICODE_STRING FileName) {
     int currentProcess = PsGetCurrentProcess() == Process;
     HANDLE hProcess;
     hProcess = NtCurrentProcess();
+    // This bit crashes
     //else {
     //    auto status = ObOpenObjectByPointer(
     //        Process, // Object (Process)
@@ -659,6 +660,7 @@ int IsReadAllowed(PEPROCESS Process, UNICODE_STRING FileName) {
     //        return 1;
     //    }
     //}
+    // ---
 
     auto size = 400;
     UNICODE_STRING* processName = (UNICODE_STRING*)ExAllocatePool(PagedPool, size);
