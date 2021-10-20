@@ -30,3 +30,16 @@
 *.exe
 *.out
 *.app
+
+**\.vs
+
+*.vcxproj.*
+*.vcxproj
+
+FsAntiScamFilter/FsAntiScamFilter/Release/**
+FsAntiScamFilter/Release/**
+FsAntiScamFilter/FsAntiScamFilter/Debug/**
+FsAntiScamFilter/Debug/**
+*.tlog
+*.log
+*.pdb
