@@ -35,6 +35,18 @@ ULONG gTraceFlags = 0;
         DbgPrint _string :                          \
         ((int)0))
 
+/*
+* Dumb undocumented windows functions fuck sake
+* Returns WINAPI
+*/
+NTSTATUS ZwQueryInformationProcess(
+    _In_      HANDLE           ProcessHandle,
+    _In_      PROCESSINFOCLASS ProcessInformationClass,
+    _Out_     PVOID            ProcessInformation,
+    _In_      ULONG            ProcessInformationLength,
+    _Out_opt_ PULONG           ReturnLength
+);
+
 /*************************************************************************
     Prototypes
 *************************************************************************/
@@ -134,6 +146,11 @@ EXTERN_C_END
 //
 
 CONST FLT_OPERATION_REGISTRATION Callbacks[] = {
+    
+    { IRP_MJ_READ,
+      0,
+      FsAntiScamFilterPreOperation,
+      FsAntiScamFilterPostOperation },
 
 #if 0 // TODO - List all of the requests to filter.
     { IRP_MJ_CREATE,
@@ -618,6 +635,44 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
+int IsReadAllowed(PEPROCESS Process) {
+    int currentProcess = PsGetCurrentProcess() == Process;
+    HANDLE hProcess;
+    if (currentProcess) {
+        hProcess = NtCurrentProcess();
+    }
+    else {
+        auto status = ObOpenObjectByPointer(
+            Process, // Object (Process)
+            OBJ_KERNEL_HANDLE, // Handle attributes
+            NULL, // PassedAccessState
+            0, // DesiredAccess
+            NULL, // ObjectType
+            KernelMode, // AccessMode
+            &hProcess // Handle
+        );
+        if (!NT_SUCCESS(status)) {
+            return 1;
+        }
+    }
+
+    auto size = 400;
+    int allowRead = 0;
+    UNICODE_STRING* processName = (UNICODE_STRING*)ExAllocatePool(PagedPool, size);
+
+    if (processName) {
+        RtlZeroMemory(processName, size); // ensure it's null terminated (all zerod)
+        auto status = ZwQueryInformationProcess(hProcess, ProcessImageFileName,
+            processName, size - sizeof(WCHAR), NULL);
+
+        if (NT_SUCCESS(status)) {
+            KdPrint(("Read operation from %wZ\n", processName));
+        }
+        ExFreePool(processName);
+    }
+    return allowRead;
+}
+
 
 /*************************************************************************
     MiniFilter callback routines.
@@ -653,43 +708,31 @@ Return Value:
 
 --*/
 {
-    NTSTATUS status;
+    auto status = FLT_PREOP_SUCCESS_NO_CALLBACK;
 
     UNREFERENCED_PARAMETER( FltObjects );
     UNREFERENCED_PARAMETER( CompletionContext );
 
-    PT_DBG_PRINT( PTDBG_TRACE_ROUTINES,
-                  ("FsAntiScamFilter!FsAntiScamFilterPreOperation: Entered\n") );
-
-    //
-    //  See if this is an operation we would like the operation status
-    //  for.  If so request it.
-    //
-    //  NOTE: most filters do NOT need to do this.  You only need to make
-    //        this call if, for example, you need to know if the oplock was
-    //        actually granted.
-    //
-
-    if (FsAntiScamFilterDoRequestOperationStatus( Data )) {
-
-        status = FltRequestOperationStatusCallback( Data,
-                                                    FsAntiScamFilterOperationStatusCallback,
-                                                    (PVOID)(++OperationStatusCtx) );
-        if (!NT_SUCCESS(status)) {
-
-            PT_DBG_PRINT( PTDBG_TRACE_OPERATION_STATUS,
-                          ("FsAntiScamFilter!FsAntiScamFilterPreOperation: FltRequestOperationStatusCallback Failed, status=%08x\n",
-                           status) );
-        }
+    // If it's kernel we'll ignore it
+    if (Data->RequestorMode == KernelMode) {
+        return status;
     }
 
-    // This template code does not do anything with the callbackData, but
-    // rather returns FLT_PREOP_SUCCESS_WITH_CALLBACK.
-    // This passes the request down to the next miniFilter in the chain.
+    PFILE_OBJECT fileObject = Data->Iopb->TargetFileObject;
+    UNICODE_STRING fileName = fileObject->FileName;
 
-    return FLT_PREOP_SUCCESS_WITH_CALLBACK;
+    KdPrint(("File Name: %wZ\n", fileName));
+
+    UNREFERENCED_PARAMETER(fileName);
+
+    if (IsReadAllowed(PsGetCurrentProcess) == 0) {
+        Data->IoStatus.Status = STATUS_ACCESS_DENIED;
+        status = FLT_PREOP_COMPLETE;
+        KdPrint(("Prevented read!"));
+    }
+
+    return status;
 }
-
 
 
 VOID
