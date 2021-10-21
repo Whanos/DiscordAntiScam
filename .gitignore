@@ -33,9 +33,6 @@
 
 **\.vs
 
-*.vcxproj.*
-*.vcxproj
-
 FsAntiScamFilter/FsAntiScamFilter/Release/**
 FsAntiScamFilter/Release/**
 FsAntiScamFilter/FsAntiScamFilter/Debug/**
