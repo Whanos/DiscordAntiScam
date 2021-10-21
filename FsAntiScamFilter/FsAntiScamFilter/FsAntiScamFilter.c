@@ -645,7 +645,7 @@ int IsReadAllowed(PEPROCESS Process, UNICODE_STRING FileName) {
     int currentProcess = PsGetCurrentProcess() == Process;
     HANDLE hProcess;
     hProcess = NtCurrentProcess();
-    // This bit crashes
+    // This bit causes a BSOD, "PAGE_FAULT_IN_NON_PAGED_AREA" or something
     //else {
     //    auto status = ObOpenObjectByPointer(
     //        Process, // Object (Process)
