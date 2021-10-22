@@ -36,7 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="FsAntiScamFilter.rc" />
-    <ClCompile Include="FsAntiScamFilter.c" />
+    <ClCompile Include="FsAntiScamFilter.cpp" />
     <Inf Include="FsAntiScamFilter.inf" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

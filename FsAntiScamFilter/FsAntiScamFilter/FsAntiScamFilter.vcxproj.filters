@@ -18,13 +18,13 @@
       <Extensions>inf;inv;inx;mof;mc;</Extensions>
     </Filter>
   </ItemGroup>
- <ItemGroup>
+  <ItemGroup>
     <Inf Include="FsAntiScamFilter.inf">
       <Filter>Driver Files</Filter>
     </Inf>
-  </ItemGroup>  
+  </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="FsAntiScamFilter.c">
+    <ClCompile Include="FsAntiScamFilter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

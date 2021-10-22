@@ -35,17 +35,6 @@ ULONG gTraceFlags = 0;
         DbgPrint _string :                          \
         ((int)0))
 
-/*
-* Dumb undocumented windows functions fuck sake
-* Returns WINAPI
-*/
-NTSTATUS ZwQueryInformationProcess(
-    _In_      HANDLE           ProcessHandle,
-    _In_      PROCESSINFOCLASS ProcessInformationClass,
-    _Out_     PVOID            ProcessInformation,
-    _In_      ULONG            ProcessInformationLength,
-    _Out_opt_ PULONG           ReturnLength
-);
 
 /*************************************************************************
     Prototypes
@@ -539,7 +528,6 @@ Return Value:
 /*************************************************************************
     MiniFilter initialization and unload routines.
 *************************************************************************/
-
 NTSTATUS
 DriverEntry (
     _In_ PDRIVER_OBJECT DriverObject,
@@ -636,13 +624,13 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-int IsReadAllowed(PEPROCESS Process, UNICODE_STRING FileName) {
+bool IsReadAllowed(PEPROCESS Process, UNICODE_STRING FileName) {
 
-    int allowRead = 1; // 1 is yeah 0 is nah
+    bool allowRead = true; 
 
     KdPrint(("FileName: %wZ\n", FileName));
 
-    int currentProcess = PsGetCurrentProcess() == Process;
+    bool currentProcess = PsGetCurrentProcess() == Process;
     HANDLE hProcess;
     hProcess = NtCurrentProcess();
     // This bit causes a BSOD, "PAGE_FAULT_IN_NON_PAGED_AREA" or something
@@ -665,20 +653,23 @@ int IsReadAllowed(PEPROCESS Process, UNICODE_STRING FileName) {
     auto size = 400;
     UNICODE_STRING* processName = (UNICODE_STRING*)ExAllocatePool(PagedPool, size);
 
-    if (processName) {
-        RtlZeroMemory(processName, size); // ensure it's null terminated (all zerod)
-        auto status = ZwQueryInformationProcess(hProcess, ProcessImageFileName,
-            processName, size - sizeof(WCHAR), NULL);
+    __try {
+        if (processName) {
+            RtlZeroMemory(processName, size); // ensure it's null terminated (all zerod)
+            /*
+            if (NT_SUCCESS(status)) {
+                KdPrint(("Read operation from %wZ\n", processName));
 
-        if (NT_SUCCESS(status)) {
-            KdPrint(("Read operation from %wZ\n", processName));
-
-            if (wcsstr(processName->Buffer, L"\\") != NULL) {
-                allowRead = 1;
+                if (wcsstr(processName->Buffer, L"\\") != NULL) {
+                    allowRead = 1;
+                }
             }
+            */
         }
     }
-    ExFreePool(processName);
+    __finally {
+        ExFreePool(processName);
+    }
     return allowRead;
 }
 
@@ -734,7 +725,7 @@ Return Value:
 
     UNREFERENCED_PARAMETER(fileName);
 
-    if (IsReadAllowed(PsGetCurrentProcess, fileName) == 0) {
+    if (IsReadAllowed(PsGetCurrentProcess(), fileName)) {
         Data->IoStatus.Status = STATUS_ACCESS_DENIED;
         status = FLT_PREOP_COMPLETE;
         KdPrint(("Prevented read!"));
