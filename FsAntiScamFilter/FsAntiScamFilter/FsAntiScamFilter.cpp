@@ -338,7 +338,6 @@ CONST FLT_OPERATION_REGISTRATION Callbacks[] = {
       FsAntiScamFilterPostOperation },
 
 #endif // TODO
-
     { IRP_MJ_OPERATION_END }
 };
 
@@ -634,20 +633,19 @@ bool IsReadAllowed(PEPROCESS Process, UNICODE_STRING FileName) {
     HANDLE hProcess;
     hProcess = NtCurrentProcess();
     // This bit causes a BSOD, "PAGE_FAULT_IN_NON_PAGED_AREA" or something
-    //else {
-    //    auto status = ObOpenObjectByPointer(
-    //        Process, // Object (Process)
-    //        OBJ_KERNEL_HANDLE, // Handle attributes
-    //        NULL, // PassedAccessState
-    //        0, // DesiredAccess
-    //        NULL, // ObjectType
-    //        KernelMode, // AccessMode
-    //        &hProcess // Handle
-    //    );
-    //    if (!NT_SUCCESS(status)) {
-    //        return 1;
-    //    }
-    //}
+        //auto status = ObOpenObjectByPointer(
+        //    Process, // Object (Process)
+        //    OBJ_KERNEL_HANDLE, // Handle attributes
+        //    NULL, // PassedAccessState
+        //    0, // DesiredAccess
+        //    NULL, // ObjectType
+        //    KernelMode, // AccessMode
+        //    &hProcess // Handle 
+        //);
+        //if (!NT_SUCCESS(status)) {
+        //    KdPrint(("Fuck"));
+        //    return 1;
+        //}
     // ---
 
     auto size = 400;
@@ -656,15 +654,14 @@ bool IsReadAllowed(PEPROCESS Process, UNICODE_STRING FileName) {
     __try {
         if (processName) {
             RtlZeroMemory(processName, size); // ensure it's null terminated (all zerod)
-            /*
-            if (NT_SUCCESS(status)) {
-                KdPrint(("Read operation from %wZ\n", processName));
+        //    if (NT_SUCCESS(status)) {
+        //        KdPrint(("Read operation from %wZ\n", processName));
 
-                if (wcsstr(processName->Buffer, L"\\") != NULL) {
-                    allowRead = 1;
-                }
-            }
-            */
+        //        if (wcsstr(processName->Buffer, L"\\") != NULL) {
+        //            allowRead = 1;
+        //        }
+
+        //    }
         }
     }
     __finally {
