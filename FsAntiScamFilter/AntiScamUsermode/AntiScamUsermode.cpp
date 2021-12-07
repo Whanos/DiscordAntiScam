@@ -12,19 +12,19 @@ HANDLE Port = NULL;
 int main()
 {
     std::cout << "AntiScam usermode client\n";
-    std::cout << "Attempting to establish connection with filter...\n";
+    std::cout << "Attempting to establish connection with filter port "<< PortName << "\n";
 
     DWORD BytesReceived = 0;
     PCHAR MessageBuffer = "Message";
     char ReceiveBuffer[500] = { 0 };
 
     if (Port == NULL) {
-        if (FilterConnectCommunicationPort(PortName, 0, NULL, 0, NULL, &Port)) {
+        if (FAILED(FilterConnectCommunicationPort(PortName, 0, NULL, 0, NULL, &Port))) {
             std::cout << "Couldn't connect to filter!";
             return 0;
          }
     }
-    if (!FilterSendMessage(Port, MessageBuffer, strlen(MessageBuffer), ReceiveBuffer, 500, &BytesReceived)) {
+    if (FilterSendMessage(Port, MessageBuffer, strlen(MessageBuffer), ReceiveBuffer, 500, &BytesReceived)) {
         std::cout << ReceiveBuffer << "\n";
     }
 
