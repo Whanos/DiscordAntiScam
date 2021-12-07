@@ -34,7 +34,7 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\AntiScamUsermode\CustomIOCTL.h">
+    <ClInclude Include="FilterCommunication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

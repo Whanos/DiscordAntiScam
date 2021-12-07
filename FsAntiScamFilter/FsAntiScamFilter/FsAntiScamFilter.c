@@ -17,10 +17,13 @@ Environment:
 #include <fltKernel.h>
 #include <dontuse.h>
 #include <suppress.h>
-#include "../AntiScamUsermode/CustomIOCTL.h"
+#include "FilterCommunication.h"
 
+// Communication
 PFLT_FILTER FilterHandle = NULL;
-
+PFLT_PORT Port = NULL;
+PFLT_PORT ClientPortGlobal = NULL;
+// Generic functions
 NTSTATUS FsFilterUnload(FLT_FILTER_UNLOAD_FLAGS Flags);
 // IRP_MJ_CREATE
 FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(PFLT_CALLBACK_DATA Data, PCFLT_RELATED_OBJECTS FltObjects, PVOID* CompletionContext);
@@ -158,81 +161,74 @@ NTSTATUS FsFilterUnload(FLT_FILTER_UNLOAD_FLAGS Flags) {
     UNREFERENCED_PARAMETER(Flags);
 
     KdPrint(("Unloading FsAntiScam filter driver! \r\n"));
+    FltCloseCommunicationPort(Port);
     FltUnregisterFilter(FilterHandle);
 
     return STATUS_SUCCESS;
 }
 
-NTSTATUS MajorFunctionHandler(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
-    UNREFERENCED_PARAMETER(DeviceObject);
-
-    PIO_STACK_LOCATION stackLocation = NULL;
-    stackLocation = IoGetCurrentIrpStackLocation(Irp);
-
-    Irp->IoStatus.Information = 0;
-    Irp->IoStatus.Status = STATUS_SUCCESS;
-    IoCompleteRequest(Irp, IO_NO_INCREMENT);
-
-    return STATUS_SUCCESS;
+NTSTATUS FsAntiScamConnect(
+    PFLT_PORT ClientPort, 
+    PVOID ServerPortCookie, 
+    PVOID Context, 
+    ULONG ContextSize, 
+    PVOID ConnectionCookie
+) {
+    ClientPortGlobal = ClientPort;
 }
 
-NTSTATUS CustomIOCTLHandler(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
-    UNREFERENCED_PARAMETER(DeviceObject);
-    PIO_STACK_LOCATION stackLocation = NULL;
-    stackLocation = IoGetCurrentIrpStackLocation(Irp);
+VOID FsAntiScamDisconnect(PVOID ConnectionCookie) {
+    FltCloseClientPort(FilterHandle, &ClientPortGlobal);
+}
 
-    if (stackLocation->Parameters.DeviceIoControl.IoControlCode == FsAntiScam_IOCTL_HELLO) {
-        CHAR* message = "Hello! :)";
-        Irp->IoStatus.Information = strlen(message);
-        Irp->IoStatus.Status = STATUS_SUCCESS;
+NTSTATUS FsAntiScamMessageReceived(
+    PVOID PortCookie, 
+    PVOID InputBuffer, 
+    ULONG InputBufferLength, 
+    PVOID OutputBuffer, 
+    ULONG OutputBufferLength, 
+    PULONG ReturnBufferLength
+) {
+    PCHAR message = "Hello! :)";
 
-        RtlCopyMemory(Irp->AssociatedIrp.SystemBuffer, message, strlen(Irp->AssociatedIrp.SystemBuffer));
+    PCHAR ApplicationMessage = (PCHAR)InputBuffer;
 
-        IoCompleteRequest(Irp, IO_NO_INCREMENT);
+    KdPrint(("Application message is: %s \r\n", ApplicationMessage));
 
-        return STATUS_SUCCESS;
-    }
-
-    Irp->IoStatus.Information = 0;
-    Irp->IoStatus.Status = STATUS_BAD_DATA; // Use this to indicate we don't know what that IOCTL call is
-
-    IoCompleteRequest(Irp, IO_NO_INCREMENT);
-
+    strcpy((PCHAR)OutputBuffer, message);
     return STATUS_SUCCESS;
 }
 
 // Entry point for the minifilter.
 NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath) {
     NTSTATUS status;
-    const PUNICODE_STRING DEVICE_NAME = L"\\Device\\FsAntiScam";
-    const PUNICODE_STRING DEVICE_SYMBOLIC_LINK = L"\\??\\FsAntiScamLink";
+    // MF Communication stuff
+    PSECURITY_DESCRIPTOR SecurityDescriptor;
+    OBJECT_ATTRIBUTES ObjectAttributes = { 0 };
 
     UNREFERENCED_PARAMETER(RegistryPath);
 
-    DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = CustomIOCTLHandler;
-
-    DriverObject->MajorFunction[IRP_MJ_CREATE] = MajorFunctionHandler;
-    DriverObject->MajorFunction[IRP_MJ_CLOSE] = MajorFunctionHandler;
-
-    status = IoCreateDevice(DriverObject, 0, &DEVICE_NAME, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, &DriverObject->DeviceObject);
-
-    if (!NT_SUCCESS(status)) {
-        KdPrint(("[FsAntiScamFilter] Could not create device! \r\n"));
-    }
-
-    status = IoCreateSymbolicLink(&DEVICE_SYMBOLIC_LINK, &DEVICE_NAME);
-    if (!NT_SUCCESS(status)) {
-        KdPrint(("[FsAntiScamFilter] Could not create link! \r\n"));
-    }
+    // Register our minifilter with the OS
     status = FltRegisterFilter(DriverObject, &FilterRegistration, &FilterHandle);
+
+    // Usermode<->Kernel communication
+    status = FltBuildDefaultSecurityDescriptor(&SecurityDescriptor, FLT_PORT_ALL_ACCESS);
    
     if (NT_SUCCESS(status)) {
-        status = FltStartFiltering(FilterHandle);
 
-        if (!NT_SUCCESS(status)) {
-            FltUnregisterFilter(FilterHandle);
+        InitializeObjectAttributes(&ObjectAttributes, &PortName, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, NULL, SecurityDescriptor);
+        status = FltCreateCommunicationPort(FilterHandle, &Port, &ObjectAttributes, NULL, FsAntiScamConnect, FsAntiScamDisconnect, FsAntiScamMessageReceived, 1);
+        
+        FltFreeSecurityDescriptor(SecurityDescriptor);
+        
+        if (NT_SUCCESS(status)) {
+            status = FltStartFiltering(FilterHandle);
+
+            if (!NT_SUCCESS(status)) {
+                FltUnregisterFilter(FilterHandle);
+                FltCloseCommunicationPort(Port);
+            }
         }
     }
-
     return status;
 }
