@@ -1,0 +1,3 @@
+#pragma once
+#include <Windows.h>
+#define FsAntiScam_IOCTL_HELLO CTL_CODE(FILE_DEVICE_UNKNOWN, 0x9000, METHOD_BUFFERED, FILE_ANY_ACCESS)
