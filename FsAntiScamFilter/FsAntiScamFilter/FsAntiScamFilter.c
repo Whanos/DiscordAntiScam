@@ -205,6 +205,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath) 
     // MF Communication stuff
     PSECURITY_DESCRIPTOR SecurityDescriptor;
     OBJECT_ATTRIBUTES ObjectAttributes = { 0 };
+    UNICODE_STRING PortNameString = RTL_CONSTANT_STRING(PortName);
 
     UNREFERENCED_PARAMETER(RegistryPath);
 
@@ -216,7 +217,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath) 
    
     if (NT_SUCCESS(status)) {
 
-        InitializeObjectAttributes(&ObjectAttributes, &PortName, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, NULL, SecurityDescriptor);
+        InitializeObjectAttributes(&ObjectAttributes, &PortNameString, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, NULL, SecurityDescriptor);
         status = FltCreateCommunicationPort(FilterHandle, &Port, &ObjectAttributes, NULL, FsAntiScamConnect, FsAntiScamDisconnect, FsAntiScamMessageReceived, 1);
         
         FltFreeSecurityDescriptor(SecurityDescriptor);
