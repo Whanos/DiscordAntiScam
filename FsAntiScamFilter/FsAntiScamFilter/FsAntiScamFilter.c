@@ -218,13 +218,13 @@ NTSTATUS FsAntiScamMessageReceived(
     ULONG OutputBufferLength, 
     PULONG ReturnBufferLength
 ) {
-    PCHAR message = "Hello! :)";
-
     PCHAR ApplicationMessage = (PCHAR)InputBuffer;
 
-    KdPrint(("Application message is: %s \r\n", ApplicationMessage));
+    if (strcmp("FILTER_GET_NEW_MESSAGES", ApplicationMessage)) {
+        strcpy((PCHAR)OutputBuffer, "Nothing to report");
+    }
 
-    strcpy((PCHAR)OutputBuffer, message);
+    KdPrint(("Application message is: %s \r\n", ApplicationMessage));
     return STATUS_SUCCESS;
 }
 
@@ -238,7 +238,7 @@ NTSTATUS DriverEntry(
     // MF Communication stuff
     PSECURITY_DESCRIPTOR SecurityDescriptor;
     OBJECT_ATTRIBUTES ObjectAttributes = { 0 };
-    UNICODE_STRING PortNameString = RTL_CONSTANT_STRING(L"\\FsAntiScamPort");
+    UNICODE_STRING PortNameString = RTL_CONSTANT_STRING(PortName);
 
     UNREFERENCED_PARAMETER(RegistryPath);
 
