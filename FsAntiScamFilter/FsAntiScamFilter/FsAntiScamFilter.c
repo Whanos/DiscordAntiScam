@@ -205,7 +205,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath) 
     // MF Communication stuff
     PSECURITY_DESCRIPTOR SecurityDescriptor;
     OBJECT_ATTRIBUTES ObjectAttributes = { 0 };
-    UNICODE_STRING PortNameString = RTL_CONSTANT_STRING(PortName);
+    UNICODE_STRING PortNameString = RTL_CONSTANT_STRING(L"\\FsAntiScamPort");
 
     UNREFERENCED_PARAMETER(RegistryPath);
 

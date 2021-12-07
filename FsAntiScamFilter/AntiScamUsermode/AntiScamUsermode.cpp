@@ -19,8 +19,8 @@ int main()
     char ReceiveBuffer[500] = { 0 };
 
     if (Port == NULL) {
-        HRESULT result = FilterConnectCommunicationPort(PortName, 0, NULL, 0, NULL, &Port);
-        std::cout << "Result code: " << result << "PortName " << PortName << "Port: " << Port;
+        HRESULT result = FilterConnectCommunicationPort(L"\\FsAntiScamPort", 0, NULL, 0, NULL, &Port);
+        std::cout << "Result code: " << result << " PortName " << PortName << " Port: " << Port;
         if (FAILED(result)) {
             std::cout << "Couldn't connect to filter!";
             return 0;
