@@ -56,7 +56,11 @@ const FLT_REGISTRATION FilterRegistration = {
     NULL,                       // TransactionNotificationCallback
 };              
 
-FLT_PREOP_CALLBACK_STATUS FsFilterPreRead(PFLT_CALLBACK_DATA Data, PCFLT_RELATED_OBJECTS FltObjects, PVOID* CompletionContext) {
+FLT_PREOP_CALLBACK_STATUS FsFilterPreRead(
+    PFLT_CALLBACK_DATA Data, 
+    PCFLT_RELATED_OBJECTS FltObjects, 
+    PVOID* CompletionContext
+) {
 
     UNREFERENCED_PARAMETER(CompletionContext);
     UNREFERENCED_PARAMETER(FltObjects);
@@ -65,7 +69,11 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreRead(PFLT_CALLBACK_DATA Data, PCFLT_RELATED
     NTSTATUS status;
     WCHAR FileName[400] = { 0 };
 
-    status = FltGetFileNameInformation(Data, FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT, &FileNameInfo);
+    status = FltGetFileNameInformation(
+        Data,                                                       // CallbackData
+        FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT,     // NameOptions
+        &FileNameInfo                                               // *FileNameInfo
+    );
     ULONG CallingId = FltGetRequestorProcessId(Data);
 
     if (NT_SUCCESS(status)) {
@@ -89,7 +97,12 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreRead(PFLT_CALLBACK_DATA Data, PCFLT_RELATED
     return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 }
 
-FLT_POSTOP_CALLBACK_STATUS FsFilterPostRead(PFLT_CALLBACK_DATA Data, PCFLT_RELATED_OBJECTS FltObjects, PVOID* CompletionContext, FLT_POST_OPERATION_FLAGS Flags) {
+FLT_POSTOP_CALLBACK_STATUS FsFilterPostRead(
+    PFLT_CALLBACK_DATA Data, 
+    PCFLT_RELATED_OBJECTS FltObjects, 
+    PVOID* CompletionContext, 
+    FLT_POST_OPERATION_FLAGS Flags
+) {
    
     UNREFERENCED_PARAMETER(Flags);
     UNREFERENCED_PARAMETER(CompletionContext);
@@ -99,7 +112,12 @@ FLT_POSTOP_CALLBACK_STATUS FsFilterPostRead(PFLT_CALLBACK_DATA Data, PCFLT_RELAT
     return FLT_POSTOP_FINISHED_PROCESSING;
 }
 
-FLT_POSTOP_CALLBACK_STATUS FsFilterPostCreate(PFLT_CALLBACK_DATA Data, PCFLT_RELATED_OBJECTS FltObjects, PVOID* CompletionContext, FLT_POST_OPERATION_FLAGS Flags) {
+FLT_POSTOP_CALLBACK_STATUS FsFilterPostCreate(
+    PFLT_CALLBACK_DATA Data, 
+    PCFLT_RELATED_OBJECTS FltObjects, 
+    PVOID* CompletionContext, 
+    FLT_POST_OPERATION_FLAGS Flags
+) {
     
     UNREFERENCED_PARAMETER(Flags);
     UNREFERENCED_PARAMETER(CompletionContext);
@@ -111,7 +129,11 @@ FLT_POSTOP_CALLBACK_STATUS FsFilterPostCreate(PFLT_CALLBACK_DATA Data, PCFLT_REL
 
 
 // PreCreate routine handler
-FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(PFLT_CALLBACK_DATA Data, PCFLT_RELATED_OBJECTS FltObjects, PVOID* CompletionContext) {
+FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
+    PFLT_CALLBACK_DATA Data, 
+    PCFLT_RELATED_OBJECTS FltObjects, 
+    PVOID* CompletionContext
+) {
 
     UNREFERENCED_PARAMETER(CompletionContext);
     UNREFERENCED_PARAMETER(FltObjects);
@@ -129,7 +151,11 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(PFLT_CALLBACK_DATA Data, PCFLT_RELAT
         KdPrint(("crap"));
     }
 
-    status = FltGetFileNameInformation(Data, FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT, &FileNameInfo);
+    status = FltGetFileNameInformation(
+        Data,                                                   // PFLT_CALLBACK_DATA
+        FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT, // FLT_FILE_NAME_OPTIONS
+        &FileNameInfo                                           // PFLT_FILE_NAME_INFORMATION
+    );
 
 
     if (NT_SUCCESS(status)) {
@@ -138,7 +164,6 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(PFLT_CALLBACK_DATA Data, PCFLT_RELAT
         if (NT_SUCCESS(status)) {
             if (FileNameInfo->Name.MaximumLength < 400) {
                 RtlCopyMemory(FileName, FileNameInfo->Name.Buffer, FileNameInfo->Name.MaximumLength);
-                //KdPrint(("File PreCreate: %ws \r\n", FileName));
                 _wcsupr(FileName);
                 if (wcsstr(FileName, L"CANTWRITETOME.TXT") != NULL) {
                     KdPrint(("Can't write that! (denied) \r\n"));
@@ -177,8 +202,12 @@ NTSTATUS FsAntiScamConnect(
     ClientPortGlobal = ClientPort;
 }
 
-VOID FsAntiScamDisconnect(PVOID ConnectionCookie) {
-    FltCloseClientPort(FilterHandle, &ClientPortGlobal);
+VOID FsAntiScamDisconnect(
+    PVOID ConnectionCookie
+) {
+    FltCloseClientPort(
+        FilterHandle,
+        &ClientPortGlobal);
 }
 
 NTSTATUS FsAntiScamMessageReceived(
@@ -200,7 +229,10 @@ NTSTATUS FsAntiScamMessageReceived(
 }
 
 // Entry point for the minifilter.
-NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath) {
+NTSTATUS DriverEntry(
+    PDRIVER_OBJECT DriverObject, 
+    PUNICODE_STRING RegistryPath
+) {
     KdPrint(("Driver is loading!"));
     NTSTATUS status;
     // MF Communication stuff
@@ -211,15 +243,36 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath) 
     UNREFERENCED_PARAMETER(RegistryPath);
 
     // Register our minifilter with the OS
-    status = FltRegisterFilter(DriverObject, &FilterRegistration, &FilterHandle);
+    status = FltRegisterFilter(
+        DriverObject, 
+        &FilterRegistration, 
+        &FilterHandle
+    );
 
-    // Usermode<->Kernel communication
-    status = FltBuildDefaultSecurityDescriptor(&SecurityDescriptor, FLT_PORT_ALL_ACCESS);
+    // Usermode <-> Kernel communication
+    status = FltBuildDefaultSecurityDescriptor(
+        &SecurityDescriptor, 
+        FLT_PORT_ALL_ACCESS
+    );
    
     if (NT_SUCCESS(status)) {
-
-        InitializeObjectAttributes(&ObjectAttributes, &PortNameString, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, NULL, SecurityDescriptor);
-        status = FltCreateCommunicationPort(FilterHandle, &Port, &ObjectAttributes, NULL, FsAntiScamConnect, FsAntiScamDisconnect, FsAntiScamMessageReceived, 1);
+        InitializeObjectAttributes(
+            &ObjectAttributes, 
+            &PortNameString, 
+            OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, 
+            NULL, 
+            SecurityDescriptor
+        );
+        status = FltCreateCommunicationPort(
+            FilterHandle, 
+            &Port, 
+            &ObjectAttributes, 
+            NULL, 
+            FsAntiScamConnect, 
+            FsAntiScamDisconnect, 
+            FsAntiScamMessageReceived, 
+            1
+        );
         KdPrint(("Port Opened! \r\n"));
         FltFreeSecurityDescriptor(SecurityDescriptor);
         

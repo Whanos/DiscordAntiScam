@@ -25,9 +25,9 @@ int main()
         return 0;
     }
     printf("Connected to filter!\n");
-    if (FilterSendMessage(Port, MessageBuffer, strlen(MessageBuffer), ReceiveBuffer, 500, &BytesReceived)) {
-        std::cout << ReceiveBuffer << "\n";
+    HRESULT message = FilterSendMessage(Port, MessageBuffer, strlen(MessageBuffer), ReceiveBuffer, 500, &BytesReceived);
+    if (SUCCEEDED(message)) {
+        printf("%s", ReceiveBuffer);
     }
-
     return 0;
 }
