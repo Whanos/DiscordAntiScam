@@ -14,17 +14,12 @@ Environment:
 
 --*/
 
-
 #include <fltKernel.h>
 #include <dontuse.h>
 #include <suppress.h>
 #include "../AntiScamUsermode/CustomIOCTL.h"
 
 PFLT_FILTER FilterHandle = NULL;
-PDRIVER_OBJECT DriverObjGlobal = NULL;
-
-const PUNICODE_STRING DEVICE_NAME = L"\\Device\\FsAntiScam";
-const PUNICODE_STRING DEVICE_SYMBOLIC_LINK = L"\\??\\FsAntiScamLink";
 
 NTSTATUS FsFilterUnload(FLT_FILTER_UNLOAD_FLAGS Flags);
 // IRP_MJ_CREATE
@@ -164,10 +159,6 @@ NTSTATUS FsFilterUnload(FLT_FILTER_UNLOAD_FLAGS Flags) {
 
     KdPrint(("Unloading FsAntiScam filter driver! \r\n"));
     FltUnregisterFilter(FilterHandle);
-    if (DriverObjGlobal != NULL) {
-        IoDeleteDevice(DriverObjGlobal->DeviceObject);
-        IoDeleteSymbolicLink(&DEVICE_SYMBOLIC_LINK);
-    }
 
     return STATUS_SUCCESS;
 }
@@ -213,10 +204,10 @@ NTSTATUS CustomIOCTLHandler(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
 // Entry point for the minifilter.
 NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath) {
     NTSTATUS status;
+    const PUNICODE_STRING DEVICE_NAME = L"\\Device\\FsAntiScam";
+    const PUNICODE_STRING DEVICE_SYMBOLIC_LINK = L"\\??\\FsAntiScamLink";
 
     UNREFERENCED_PARAMETER(RegistryPath);
-
-    DriverObjGlobal = DriverObject;
 
     DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = CustomIOCTLHandler;
 
