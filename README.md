@@ -1,5 +1,3 @@
-# this project is on hold cause i cba to continue it because signing is not really possible for me, so use this as an example if you want
-
 # DiscordAntiScam
 Stop getting your token grabbed.
 
