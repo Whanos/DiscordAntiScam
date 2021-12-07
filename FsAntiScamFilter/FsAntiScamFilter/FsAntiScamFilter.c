@@ -219,13 +219,15 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath) 
 
         InitializeObjectAttributes(&ObjectAttributes, &PortNameString, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, NULL, SecurityDescriptor);
         status = FltCreateCommunicationPort(FilterHandle, &Port, &ObjectAttributes, NULL, FsAntiScamConnect, FsAntiScamDisconnect, FsAntiScamMessageReceived, 1);
-        
+        KdPrint(("Port Opened! \r\n"));
         FltFreeSecurityDescriptor(SecurityDescriptor);
         
         if (NT_SUCCESS(status)) {
+            KdPrint(("Filtering now!\r\n"));
             status = FltStartFiltering(FilterHandle);
 
             if (!NT_SUCCESS(status)) {
+                KdPrint(("Error in DriverEntry. Killing program! \r\n"));
                 FltUnregisterFilter(FilterHandle);
                 FltCloseCommunicationPort(Port);
             }

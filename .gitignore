@@ -45,3 +45,4 @@ FsAntiScamFilter/FsAntiScamFilter/x64/Release/**
 *.pdb
 
 FsAntiScamFilter/FsAntiScamFilter/x64/**
+*.idb
