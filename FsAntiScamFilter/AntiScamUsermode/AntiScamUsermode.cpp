@@ -20,8 +20,7 @@ int main()
 
     if (Port == NULL) {
         HRESULT result = FilterConnectCommunicationPort(L"\\FsAntiScamPort", 0, NULL, 0, NULL, &Port);
-        std::cout << "Result code: " << result << " PortName " << PortName << " Port: " << Port;
-        if (FAILED(result)) {
+        if (result) {
             std::cout << "Couldn't connect to filter!";
             return 0;
          }

@@ -201,6 +201,7 @@ NTSTATUS FsAntiScamMessageReceived(
 
 // Entry point for the minifilter.
 NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath) {
+    KdPrint(("Driver is loading!"));
     NTSTATUS status;
     // MF Communication stuff
     PSECURITY_DESCRIPTOR SecurityDescriptor;
