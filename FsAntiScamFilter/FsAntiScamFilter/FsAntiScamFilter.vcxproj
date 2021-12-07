@@ -36,7 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="FsAntiScamFilter.rc" />
-    <ClCompile Include="FsAntiScamFilter.cpp" />
+    <ClCompile Include="FsAntiScamFilter.c" />
     <Inf Include="FsAntiScamFilter.inf" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -165,6 +165,9 @@
     <Link>
       <AdditionalDependencies>fltmgr.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <DriverSign>
+      <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
+    </DriverSign>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Link>

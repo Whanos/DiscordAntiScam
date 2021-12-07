@@ -24,7 +24,7 @@
     </Inf>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="FsAntiScamFilter.cpp">
+    <ClCompile Include="FsAntiScamFilter.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
