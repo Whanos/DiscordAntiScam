@@ -220,11 +220,15 @@ NTSTATUS FsAntiScamMessageReceived(
 ) {
     PCHAR ApplicationMessage = (PCHAR)InputBuffer;
 
-    if (strcmp("FILTER_GET_NEW_MESSAGES", ApplicationMessage)) {
-        strcpy((PCHAR)OutputBuffer, "Nothing to report");
+    KdPrint(("Application message is: %s \r\n", ApplicationMessage));
+
+    if (!strcmp("FILTER_GET_NEW_MESSAGES\0", ApplicationMessage)) {
+        PCHAR message = "FILTER_CREATE_MESSAGE_BOXHELLO! I AM THE KERNEL";
+        KdPrint(("Sending message: %s \r\n", message));
+        strcpy((PCHAR)OutputBuffer, message);
+        return STATUS_SUCCESS;
     }
 
-    KdPrint(("Application message is: %s \r\n", ApplicationMessage));
     return STATUS_SUCCESS;
 }
 

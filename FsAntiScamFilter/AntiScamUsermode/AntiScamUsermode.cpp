@@ -3,7 +3,12 @@
 #include <windows.h>
 #include <fltUser.h>
 #include <WinUser.h>
+#include <chrono>
+#include <thread>
 #include "..\FsAntiScamFilter\FilterCommunication.h"
+
+void CheckForNewKernelMessages();
+void RunCommandFromKernel(std::string KernelMessage);
 
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "kernel32.lib")
@@ -28,17 +33,12 @@ int main()
         return 0;
     }
     printf("Connected to filter!\n");
-    printf("Press [ENTER] to write a command");
     printf("--------------------\n");
 
     bool isRunning = true;
     while (isRunning) {
         CheckForNewKernelMessages();
-    }
-
-    HRESULT message = FilterSendMessage(Port, MessageBuffer, strlen(MessageBuffer), ReceiveBuffer, 500, &BytesReceived);
-    if (SUCCEEDED(message)) {
-        printf("%s", ReceiveBuffer);
+        std::this_thread::sleep_for(std::chrono::seconds(10)); // We don't need to spam the kernel.
     }
     return 0;
 }
@@ -52,6 +52,7 @@ void CheckForNewKernelMessages() {
         printf("Error sending command to filter! Error: 0x%08x\n", message);
     }
     std::string kernelMessage(ReceiverBuffer);
+    printf("Kernel said: %s\n", kernelMessage.c_str());
     RunCommandFromKernel(kernelMessage);
 }
 
@@ -60,7 +61,8 @@ void RunCommandFromKernel(std::string KernelMessage) {
     // Filter wanted a messagebox created
     if (KernelMessage.find("FILTER_CREATE_MESSAGE_BOX") != std::string::npos) {
         std::string message = KernelMessage.substr(25);
-        LPCWSTR mBoxMessage = std::wstring(message.begin(), message.end()).c_str(); // Get string *after* the message
+        std::wstring messageWstr = std::wstring(message.begin(), message.end());
+        LPCWSTR mBoxMessage = messageWstr.c_str(); // Get string *after* the message
         MessageBox(NULL,
             mBoxMessage,
             L"Notice from AntiScam filter!",
@@ -68,11 +70,11 @@ void RunCommandFromKernel(std::string KernelMessage) {
     }
     if (KernelMessage.find("FILTER_STANDARD_LOG") != std::string::npos) {
         std::string message = KernelMessage.substr(19);
-        printf("[NORMAL] %s", message);
+        printf("[NORMAL] %s", message.c_str());
     }
     if (KernelMessage.find("FILTER_WARNING_LOG") != std::string::npos) {
         std::string message = KernelMessage.substr(18);
-        printf("[WARNING] %s", message);
+        printf("[WARNING] %s", message.c_str());
     }
     // error log
     // settings
