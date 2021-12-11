@@ -6,6 +6,48 @@
 #include <chrono>
 #include <thread>
 #include "..\FsAntiScamFilter\FilterCommunication.h"
+#include <wintoast/wintoastlib.h>
+
+using namespace WinToastLib;
+
+class CustomHandler : public IWinToastHandler {
+public:
+    void toastActivated() const {
+        std::wcout << L"The user clicked in this toast" << std::endl;
+        exit(0);
+    }
+
+    void toastActivated(int actionIndex) const {
+        std::wcout << L"The user clicked on action #" << actionIndex << std::endl;
+        exit(16 + actionIndex);
+    }
+
+    void toastDismissed(WinToastDismissalReason state) const {
+        switch (state) {
+        case UserCanceled:
+            std::wcout << L"The user dismissed this toast" << std::endl;
+            exit(1);
+            break;
+        case TimedOut:
+            std::wcout << L"The toast has timed out" << std::endl;
+            exit(2);
+            break;
+        case ApplicationHidden:
+            std::wcout << L"The application hid the toast using ToastNotifier.hide()" << std::endl;
+            exit(3);
+            break;
+        default:
+            std::wcout << L"Toast not activated" << std::endl;
+            exit(4);
+            break;
+        }
+    }
+
+    void toastFailed() const {
+        std::wcout << L"Error showing current toast" << std::endl;
+        exit(5);
+    }
+};
 
 void CheckForNewKernelMessages();
 void RunCommandFromKernel(std::string KernelMessage);
@@ -23,6 +65,26 @@ int main()
     std::cout << "AntiScam usermode client\n";
     std::cout << "Attempting to establish connection with filter port...\n";
 
+    if (!WinToast::isCompatible()) {
+        printf("Your computer is not compatible with WinToast! You will not get desktop notifications.\n");
+    }
+
+    WinToast::instance()->setAppName(L"AntiScamClient");
+    const auto aumi = WinToast::configureAUMI(L"Whanos", L"AntiScamClient", L"AntiScamClient", L"2021112");
+    WinToast::instance()->setAppUserModelId(aumi);
+
+    if (!WinToast::instance()->initialize()) {
+        printf("Error: Could not initialise WinToast lib!\n");
+    }
+
+    CustomHandler* handler = new CustomHandler;
+    WinToastTemplate templ = WinToastTemplate(WinToastTemplate::Text01);
+    templ.setTextField(L"Hello!", WinToastTemplate::FirstLine);
+
+    if (!WinToast::instance()->showToast(templ, handler)) {
+        printf("It borked\n");
+    }
+    
     DWORD BytesReceived = 0;
     PCHAR MessageBuffer = "Message";
     char ReceiveBuffer[500] = { 0 };
