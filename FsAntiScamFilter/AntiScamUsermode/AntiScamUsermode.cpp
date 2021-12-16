@@ -79,14 +79,13 @@ int main()
 
     CustomHandler* handler = new CustomHandler;
     WinToastTemplate templ = WinToastTemplate(WinToastTemplate::Text01);
-    templ.setTextField(L"Hello!", WinToastTemplate::FirstLine);
+    templ.setTextField(L"Discord AntiScam is running!", WinToastTemplate::FirstLine);
 
     if (!WinToast::instance()->showToast(templ, handler)) {
         printf("It borked\n");
     }
     
     DWORD BytesReceived = 0;
-    PCHAR MessageBuffer = "Message";
     char ReceiveBuffer[500] = { 0 };
 
     result = FilterConnectCommunicationPort(PortName, 0, NULL, 0, NULL, &Port);
@@ -122,7 +121,7 @@ void CheckForNewKernelMessages() {
 void RunCommandFromKernel(std::string KernelMessage) {
     // Filter wanted a messagebox created
     if (KernelMessage.find("FILTER_CREATE_MESSAGE_BOX") != std::string::npos) {
-        std::string message = KernelMessage.substr(25);
+        std::string message = KernelMessage.substr(26);
         std::wstring messageWstr = std::wstring(message.begin(), message.end());
         LPCWSTR mBoxMessage = messageWstr.c_str(); // Get string *after* the message
         MessageBox(NULL,

@@ -19,6 +19,8 @@ Environment:
 #include <suppress.h>
 #include "FilterCommunication.h"
 
+WCHAR FileName[400] = { 0 };
+
 // Communication
 PFLT_FILTER FilterHandle = NULL;
 PFLT_PORT Port = NULL;
@@ -140,7 +142,6 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
 
     PFLT_FILE_NAME_INFORMATION FileNameInfo;
     NTSTATUS status;
-    WCHAR FileName[400] = { 0 };
 
     PUNICODE_STRING CallingProcessName[400] = { 0 };
     
@@ -175,6 +176,7 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
             }
         }
         FltReleaseFileNameInformation(FileNameInfo);
+        //RtlCopyMemory(FileName, 0, strlen(FileName));
     }
 
     return FLT_PREOP_SUCCESS_WITH_CALLBACK;
@@ -223,9 +225,8 @@ NTSTATUS FsAntiScamMessageReceived(
     KdPrint(("Application message is: %s \r\n", ApplicationMessage));
 
     if (!strcmp("FILTER_GET_NEW_MESSAGES\0", ApplicationMessage)) {
-        PCHAR message = "FILTER_CREATE_MESSAGE_BOXHELLO! I AM THE KERNEL";
-        KdPrint(("Sending message: %s \r\n", message));
-        strcpy((PCHAR)OutputBuffer, message);
+        KdPrint(("Sending message"));
+        strcpy((PCHAR)OutputBuffer, FileName);
         return STATUS_SUCCESS;
     }
 
