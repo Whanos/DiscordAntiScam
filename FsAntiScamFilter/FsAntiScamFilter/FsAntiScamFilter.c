@@ -19,7 +19,7 @@ Environment:
 #include <suppress.h>
 #include "FilterCommunication.h"
 
-WCHAR FileName[400] = { 0 };
+WCHAR GlobalFileName[400] = { 0 };
 
 // Communication
 PFLT_FILTER FilterHandle = NULL;
@@ -84,8 +84,9 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreRead(
             if (FileNameInfo->Name.MaximumLength < 400) {
                 RtlCopyMemory(FileName, FileNameInfo->Name.Buffer, FileNameInfo->Name.MaximumLength);
                 _wcsupr(FileName);
-                // KdPrint(("File PreRead: %ws \r\n", FileName)); // Spammy af line
+                //KdPrint(("File PreRead: %ws \r\n", FileName)); // Spammy af line
                 if (wcsstr(FileName, L"CANTREADME.TXT") != NULL) {
+                    RtlCopyMemory(GlobalFileName, FileNameInfo->Name.Buffer, FileNameInfo->Name.MaximumLength);
                     KdPrint(("Can't read that! (denied) \r\n"));
                     Data->IoStatus.Status = STATUS_ACCESS_DENIED;
                     Data->IoStatus.Information = 0;
@@ -142,7 +143,7 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
 
     PFLT_FILE_NAME_INFORMATION FileNameInfo;
     NTSTATUS status;
-
+    WCHAR FileName[400] = { 0 };
     PUNICODE_STRING CallingProcessName[400] = { 0 };
     
     PEPROCESS CallingProcess = FltGetRequestorProcess(Data);
@@ -165,9 +166,10 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
         if (NT_SUCCESS(status)) {
             if (FileNameInfo->Name.MaximumLength < 400) {
                 RtlCopyMemory(FileName, FileNameInfo->Name.Buffer, FileNameInfo->Name.MaximumLength);
+                KdPrint(("File PreCreate: %ws \r\n", FileName)); // Spammy af line
                 _wcsupr(FileName);
-                if (wcsstr(FileName, L"CANTWRITETOME.TXT") != NULL) {
-                    KdPrint(("Can't write that! (denied) \r\n"));
+                if (wcsstr(FileName, L"000003.LDB") != NULL) {
+                    KdPrint(("Can't write that! (denied): %ws \r\n", FileName));
                     Data->IoStatus.Status = STATUS_ACCESS_DENIED;
                     Data->IoStatus.Information = 0;
                     FltReleaseFileNameInformation(FileNameInfo);
@@ -225,8 +227,8 @@ NTSTATUS FsAntiScamMessageReceived(
     KdPrint(("Application message is: %s \r\n", ApplicationMessage));
 
     if (!strcmp("FILTER_GET_NEW_MESSAGES\0", ApplicationMessage)) {
-        KdPrint(("Sending message"));
-        strcpy((PCHAR)OutputBuffer, FileName);
+        KdPrint(("Sending message: %ws \r\n", GlobalFileName));
+        strcpy((PCHAR)OutputBuffer, GlobalFileName);
         return STATUS_SUCCESS;
     }
 

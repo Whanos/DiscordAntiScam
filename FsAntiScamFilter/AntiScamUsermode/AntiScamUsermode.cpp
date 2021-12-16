@@ -69,6 +69,7 @@ int main()
         printf("Your computer is not compatible with WinToast! You will not get desktop notifications.\n");
     }
 
+    
     WinToast::instance()->setAppName(L"AntiScamClient");
     const auto aumi = WinToast::configureAUMI(L"Whanos", L"AntiScamClient", L"AntiScamClient", L"2021112");
     WinToast::instance()->setAppUserModelId(aumi);
@@ -85,6 +86,7 @@ int main()
         printf("It borked\n");
     }
     
+    
     DWORD BytesReceived = 0;
     char ReceiveBuffer[500] = { 0 };
 
@@ -99,7 +101,7 @@ int main()
     bool isRunning = true;
     while (isRunning) {
         CheckForNewKernelMessages();
-        std::this_thread::sleep_for(std::chrono::seconds(10)); // We don't need to spam the kernel.
+        // std::this_thread::sleep_for(std::chrono::seconds(10)); // We don't need to spam the kernel.
     }
     return 0;
 }
