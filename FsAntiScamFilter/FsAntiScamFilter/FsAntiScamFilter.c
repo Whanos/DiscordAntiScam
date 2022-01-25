@@ -84,8 +84,8 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreRead(
             if (FileNameInfo->Name.MaximumLength < 400) {
                 RtlCopyMemory(FileName, FileNameInfo->Name.Buffer, FileNameInfo->Name.MaximumLength);
                 _wcsupr(FileName);
-                //KdPrint(("File PreRead: %ws \r\n", FileName)); // Spammy af line
-                if (wcsstr(FileName, L"CANTREADME.TXT") != NULL) {
+                KdPrint(("File PreRead: %ws \r\n", FileName)); // Spammy af line
+                if (wcsstr(FileName, L"DISCORD\\LOCAL STORAGE\\LEVELDB") != NULL) {
                     RtlCopyMemory(GlobalFileName, FileNameInfo->Name.Buffer, FileNameInfo->Name.MaximumLength);
                     KdPrint(("Can't read that! (denied) \r\n"));
                     Data->IoStatus.Status = STATUS_ACCESS_DENIED;
@@ -166,7 +166,7 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
         if (NT_SUCCESS(status)) {
             if (FileNameInfo->Name.MaximumLength < 400) {
                 RtlCopyMemory(FileName, FileNameInfo->Name.Buffer, FileNameInfo->Name.MaximumLength);
-                KdPrint(("File PreCreate: %ws \r\n", FileName)); // Spammy af line
+                //KdPrint(("File PreCreate: %ws \r\n", FileName)); // Spammy af line
                 _wcsupr(FileName);
                 if (wcsstr(FileName, L"000003.LDB") != NULL) {
                     KdPrint(("Can't write that! (denied): %ws \r\n", FileName));
