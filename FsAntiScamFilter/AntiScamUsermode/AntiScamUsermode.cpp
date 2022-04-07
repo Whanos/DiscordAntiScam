@@ -7,9 +7,10 @@
 #include <thread>
 #include "..\FsAntiScamFilter\FilterCommunication.h"
 #include <wintoast/wintoastlib.h>
+#include "ProgramUtils.h"
 
 using namespace WinToastLib;
-
+// Define toast notification handler
 class CustomHandler : public IWinToastHandler {
 public:
     void toastActivated() const {
@@ -60,8 +61,14 @@ HANDLE Port = INVALID_HANDLE_VALUE;
 
 int main()
 {
+    // Program needs to be elevated in order to connect to filter port
+    if (!IsElevated()) {
+        printf("Program is not running as administrator! You must run it as administrator or it cannot connect to the filter.\n");
+        exit(1);
+    }
     HRESULT result = S_OK;
 
+    SetConsoleTitle(L"AntiScam Usermode Client");
     std::cout << "AntiScam usermode client\n";
     std::cout << "Attempting to establish connection with filter port...\n";
 
@@ -69,7 +76,6 @@ int main()
         printf("Your computer is not compatible with WinToast! You will not get desktop notifications.\n");
     }
 
-    
     WinToast::instance()->setAppName(L"AntiScamClient");
     const auto aumi = WinToast::configureAUMI(L"Whanos", L"AntiScamClient", L"AntiScamClient", L"2021112");
     WinToast::instance()->setAppUserModelId(aumi);
@@ -86,7 +92,7 @@ int main()
         printf("It borked\n");
     }
     
-    
+    // Start our buffers
     DWORD BytesReceived = 0;
     char ReceiveBuffer[500] = { 0 };
 
@@ -95,6 +101,8 @@ int main()
         printf("Could not connect to filter! :( - 0x%08x\n", result);
         return 0;
     }
+
+    system("cls"); // Clear text
     printf("Connected to filter!\n");
     printf("--------------------\n");
 

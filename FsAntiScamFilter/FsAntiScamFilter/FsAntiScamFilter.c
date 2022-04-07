@@ -14,14 +14,21 @@ Environment:
 
 --*/
 
-#include <fltKernel.h>
-#include <dontuse.h>
-#include <suppress.h>
+#include "DriverHeaders.h"
 #include "FilterCommunication.h"
+
 
 WCHAR GlobalFileName[400] = { 0 };
 // Undocumented windows bs
-const char* PsGetProcessImageFileName(PEPROCESS Process);
+
+extern UCHAR* PsGetProcessImageFileName(IN PEPROCESS Process);
+
+extern   NTSTATUS PsLookupProcessByProcessId(
+    HANDLE ProcessId,
+    PEPROCESS* Process
+);
+typedef PCHAR(*GET_PROCESS_IMAGE_NAME) (PEPROCESS Process);
+GET_PROCESS_IMAGE_NAME gGetProcessImageFileName;
 // Communication
 PFLT_FILTER FilterHandle = NULL;
 PFLT_PORT Port = NULL;
@@ -58,6 +65,17 @@ const FLT_REGISTRATION FilterRegistration = {
     NULL,                       // NormalizeContextCleanupCallback
     NULL,                       // TransactionNotificationCallback
 };              
+
+
+char * GetProcessNameFromPid(HANDLE pid)
+{
+    PEPROCESS Process;
+    if (PsLookupProcessByProcessId(pid, & Process) == STATUS_INVALID_PARAMETER)
+    {
+        return "pid???";
+    }
+    return (CHAR*)PsGetProcessImageFileName(Process);
+}
 
 FLT_PREOP_CALLBACK_STATUS FsFilterPreRead(
     PFLT_CALLBACK_DATA Data, 
@@ -145,12 +163,13 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
     PFLT_FILE_NAME_INFORMATION FileNameInfo;
     NTSTATUS status;
     WCHAR FileName[400] = { 0 };
-    PUNICODE_STRING CallingProcessName[400] = { 0 };
+    PUNICODE_STRING CallingProcessPath = NULL;
     
     PEPROCESS CallingProcess = FltGetRequestorProcess(Data);
-    status = SeLocateProcessImageName(CallingProcess, &CallingProcessName);
 
-    const char* ProcessName = PsGetProcessImageFileName(CallingProcess);
+    status = SeLocateProcessImageName(CallingProcess, &CallingProcessPath);
+    int processId = PsGetProcessId(CallingProcess);
+    char* Path = GetProcessNameFromPid(processId);
 
     if (!NT_SUCCESS(status)) {
         KdPrint(("crap"));
@@ -169,17 +188,19 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
         if (NT_SUCCESS(status)) {
             if (FileNameInfo->Name.MaximumLength < 400) {
                 RtlCopyMemory(FileName, FileNameInfo->Name.Buffer, FileNameInfo->Name.MaximumLength);
-                // KdPrint(("File PreCreate: %ws \r\n", FileName)); // Spammy af line
+                // KdPrint(("%wZ Caused File PreCreate: %ws \r\n", CallingProcessName, FileName)); // Spammy af line
                 _wcsupr(FileName);
+                // Check for processes trying to read LEVELDB files
                 if (wcsstr(FileName, L"DISCORD\\LOCAL STORAGE\\LEVELDB") != NULL) {
-                    KdPrint(("%s tried to read %ws \r\n", ProcessName, FileName));
+                    KdPrint(("%wZ tried to read %ws \r\n", CallingProcessPath, FileName));
                     Data->IoStatus.Status = STATUS_ACCESS_DENIED;
                     Data->IoStatus.Information = 0;
                     FltReleaseFileNameInformation(FileNameInfo);
                     return FLT_PREOP_COMPLETE;
                 }
+                // Check for processes trying to write to 
                 if (wcsstr(FileName, L"DISCORD_DESKTOP_CORE") != NULL) {
-                    KdPrint(("%s tried to read %ws \r\n", ProcessName, FileName));
+                    KdPrint(("%wZ tried to read %ws \r\n", CallingProcessPath, FileName));
                     Data->IoStatus.Status = STATUS_ACCESS_DENIED;
                     Data->IoStatus.Information = 0;
                     FltReleaseFileNameInformation(FileNameInfo);

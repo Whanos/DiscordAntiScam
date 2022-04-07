@@ -143,6 +143,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AntiScamUsermode.cpp" />
+    <ClCompile Include="ProgramUtils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ProgramUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
