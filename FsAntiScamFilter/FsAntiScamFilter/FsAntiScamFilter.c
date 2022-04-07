@@ -20,7 +20,8 @@ Environment:
 #include "FilterCommunication.h"
 
 WCHAR GlobalFileName[400] = { 0 };
-
+// Undocumented windows bs
+const char* PsGetProcessImageFileName(PEPROCESS Process);
 // Communication
 PFLT_FILTER FilterHandle = NULL;
 PFLT_PORT Port = NULL;
@@ -84,7 +85,7 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreRead(
             if (FileNameInfo->Name.MaximumLength < 400) {
                 RtlCopyMemory(FileName, FileNameInfo->Name.Buffer, FileNameInfo->Name.MaximumLength);
                 _wcsupr(FileName);
-                KdPrint(("File PreRead: %ws \r\n", FileName)); // Spammy af line
+                // KdPrint(("File PreRead: %ws \r\n", FileName)); // Spammy af line
                 if (wcsstr(FileName, L"DISCORD\\LOCAL STORAGE\\LEVELDB") != NULL) {
                     RtlCopyMemory(GlobalFileName, FileNameInfo->Name.Buffer, FileNameInfo->Name.MaximumLength);
                     KdPrint(("Can't read that! (denied) \r\n"));
@@ -103,7 +104,7 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreRead(
 FLT_POSTOP_CALLBACK_STATUS FsFilterPostRead(
     PFLT_CALLBACK_DATA Data, 
     PCFLT_RELATED_OBJECTS FltObjects, 
-    PVOID* CompletionContext, 
+    PVOID* CompletionContext,  
     FLT_POST_OPERATION_FLAGS Flags
 ) {
    
@@ -149,6 +150,8 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
     PEPROCESS CallingProcess = FltGetRequestorProcess(Data);
     status = SeLocateProcessImageName(CallingProcess, &CallingProcessName);
 
+    const char* ProcessName = PsGetProcessImageFileName(CallingProcess);
+
     if (!NT_SUCCESS(status)) {
         KdPrint(("crap"));
     }
@@ -166,10 +169,17 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
         if (NT_SUCCESS(status)) {
             if (FileNameInfo->Name.MaximumLength < 400) {
                 RtlCopyMemory(FileName, FileNameInfo->Name.Buffer, FileNameInfo->Name.MaximumLength);
-                //KdPrint(("File PreCreate: %ws \r\n", FileName)); // Spammy af line
+                // KdPrint(("File PreCreate: %ws \r\n", FileName)); // Spammy af line
                 _wcsupr(FileName);
-                if (wcsstr(FileName, L"000003.LDB") != NULL) {
-                    KdPrint(("Can't write that! (denied): %ws \r\n", FileName));
+                if (wcsstr(FileName, L"DISCORD\\LOCAL STORAGE\\LEVELDB") != NULL) {
+                    KdPrint(("%s tried to read %ws \r\n", ProcessName, FileName));
+                    Data->IoStatus.Status = STATUS_ACCESS_DENIED;
+                    Data->IoStatus.Information = 0;
+                    FltReleaseFileNameInformation(FileNameInfo);
+                    return FLT_PREOP_COMPLETE;
+                }
+                if (wcsstr(FileName, L"DISCORD_DESKTOP_CORE") != NULL) {
+                    KdPrint(("%s tried to read %ws \r\n", ProcessName, FileName));
                     Data->IoStatus.Status = STATUS_ACCESS_DENIED;
                     Data->IoStatus.Information = 0;
                     FltReleaseFileNameInformation(FileNameInfo);
@@ -178,7 +188,7 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
             }
         }
         FltReleaseFileNameInformation(FileNameInfo);
-        //RtlCopyMemory(FileName, 0, strlen(FileName));
+        // RtlCopyMemory(FileName, 0, strlen(FileName));
     }
 
     return FLT_PREOP_SUCCESS_WITH_CALLBACK;
