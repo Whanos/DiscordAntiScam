@@ -20,7 +20,6 @@ Environment:
 
 WCHAR GlobalFileName[400] = { 0 };
 // Undocumented windows bs
-
 extern UCHAR* PsGetProcessImageFileName(IN PEPROCESS Process);
 
 extern   NTSTATUS PsLookupProcessByProcessId(
@@ -156,7 +155,6 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
     PCFLT_RELATED_OBJECTS FltObjects, 
     PVOID* CompletionContext
 ) {
-
     UNREFERENCED_PARAMETER(CompletionContext);
     UNREFERENCED_PARAMETER(FltObjects);
 
@@ -167,6 +165,7 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
     
     PEPROCESS CallingProcess = FltGetRequestorProcess(Data);
 
+    // 
     status = SeLocateProcessImageName(CallingProcess, &CallingProcessPath);
     int processId = PsGetProcessId(CallingProcess);
     char* Path = GetProcessNameFromPid(processId);

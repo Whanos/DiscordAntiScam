@@ -144,6 +144,7 @@
   <ItemGroup>
     <ClCompile Include="AntiScamUsermode.cpp" />
     <ClCompile Include="ProgramUtils.cpp" />
+    <ClCompile Include="ValidateProgram.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ProgramUtils.h" />
