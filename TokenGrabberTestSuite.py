@@ -44,6 +44,7 @@ def TestWritingToIndexJS():
         # return it to normal, lol
         f = open(desktopCorePath, "w")
         f.write("module.exports = require('./core.asar');")
+        f.close()
     except PermissionError:
         blocked = True
 
@@ -54,5 +55,5 @@ def TestWritingToIndexJS():
 
 print("-----------------------------")
 print(f"Test results:\n"
-      f"\nReading LevelDB files: {TestLevelDB()}"
-      f"\nWriting to index.js: {TestWritingToIndexJS()}")
+      f"\nBlock reading of LevelDB files: {TestLevelDB()}"
+      f"\nBlock writing to index.js: {TestWritingToIndexJS()}")
