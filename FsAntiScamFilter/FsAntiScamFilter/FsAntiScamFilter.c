@@ -22,7 +22,7 @@ WCHAR GlobalFileName[400] = { 0 };
 // Undocumented windows bs
 extern UCHAR* PsGetProcessImageFileName(IN PEPROCESS Process);
 
-extern   NTSTATUS PsLookupProcessByProcessId(
+extern NTSTATUS PsLookupProcessByProcessId(
     HANDLE ProcessId,
     PEPROCESS* Process
 );
@@ -81,20 +81,29 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreRead(
     PCFLT_RELATED_OBJECTS FltObjects, 
     PVOID* CompletionContext
 ) {
-
     UNREFERENCED_PARAMETER(CompletionContext);
     UNREFERENCED_PARAMETER(FltObjects);
-    
+
     PFLT_FILE_NAME_INFORMATION FileNameInfo;
     NTSTATUS status;
     WCHAR FileName[400] = { 0 };
+    PUNICODE_STRING CallingProcessPath = NULL; // Returns as volume
+    PEPROCESS CallingProcess = FltGetRequestorProcess(Data);
+
+    // 
+    status = SeLocateProcessImageName(CallingProcess, &CallingProcessPath);
+    int processId = PsGetProcessId(CallingProcess);
+    char* Path = GetProcessNameFromPid(processId);
+
+    if (!NT_SUCCESS(status)) {
+        KdPrint(("SeLocateProcessImageName failed! (line 185) %lx\n", status));
+    }
 
     status = FltGetFileNameInformation(
-        Data,                                                       // CallbackData
-        FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT,     // NameOptions
-        &FileNameInfo                                               // *FileNameInfo
+        Data,                                                   // PFLT_CALLBACK_DATA
+        FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT, // FLT_FILE_NAME_OPTIONS
+        &FileNameInfo                                           // PFLT_FILE_NAME_INFORMATION
     );
-    ULONG CallingId = FltGetRequestorProcessId(Data);
 
     if (NT_SUCCESS(status)) {
         status = FltParseFileNameInformation(FileNameInfo);
@@ -105,9 +114,9 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreRead(
                 // KdPrint(("File PreRead: %ws \r\n", FileName)); // Spammy af line
                 if (wcsstr(FileName, L"DISCORD\\LOCAL STORAGE\\LEVELDB") != NULL) {
                     RtlCopyMemory(GlobalFileName, FileNameInfo->Name.Buffer, FileNameInfo->Name.MaximumLength);
-                    KdPrint(("Can't read that! (denied) \r\n"));
                     Data->IoStatus.Status = STATUS_ACCESS_DENIED;
                     Data->IoStatus.Information = 0;
+                    KdPrint(("%wZ tried to read %ws \r\n", CallingProcessPath, FileName));
                     FltReleaseFileNameInformation(FileNameInfo);
                     return FLT_PREOP_COMPLETE;
                 }
@@ -161,8 +170,7 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
     PFLT_FILE_NAME_INFORMATION FileNameInfo;
     NTSTATUS status;
     WCHAR FileName[400] = { 0 };
-    PUNICODE_STRING CallingProcessPath = NULL;
-    
+    PUNICODE_STRING CallingProcessPath = NULL; // Returns as volume
     PEPROCESS CallingProcess = FltGetRequestorProcess(Data);
 
     // 
@@ -171,7 +179,7 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
     char* Path = GetProcessNameFromPid(processId);
 
     if (!NT_SUCCESS(status)) {
-        KdPrint(("crap"));
+        KdPrint(("SeLocateProcessImageName failed! (line 185) %lx\n", status));
     }
 
     status = FltGetFileNameInformation(
@@ -191,17 +199,17 @@ FLT_PREOP_CALLBACK_STATUS FsFilterPreCreate(
                 _wcsupr(FileName);
                 // Check for processes trying to read LEVELDB files
                 if (wcsstr(FileName, L"DISCORD\\LOCAL STORAGE\\LEVELDB") != NULL) {
-                    KdPrint(("%wZ tried to read %ws \r\n", CallingProcessPath, FileName));
                     Data->IoStatus.Status = STATUS_ACCESS_DENIED;
                     Data->IoStatus.Information = 0;
+                    KdPrint(("%wZ tried to read %ws \r\n", CallingProcessPath, FileName));
                     FltReleaseFileNameInformation(FileNameInfo);
                     return FLT_PREOP_COMPLETE;
                 }
                 // Check for processes trying to write to 
                 if (wcsstr(FileName, L"DISCORD_DESKTOP_CORE") != NULL) {
-                    KdPrint(("%wZ tried to read %ws \r\n", CallingProcessPath, FileName));
                     Data->IoStatus.Status = STATUS_ACCESS_DENIED;
                     Data->IoStatus.Information = 0;
+                    KdPrint(("%wZ tried to read %ws \r\n", CallingProcessPath, FileName));
                     FltReleaseFileNameInformation(FileNameInfo);
                     return FLT_PREOP_COMPLETE;
                 }

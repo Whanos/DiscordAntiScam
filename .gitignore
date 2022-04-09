@@ -47,8 +47,7 @@ FsAntiScamFilter/FsAntiScamFilter/x64/Release/**
 FsAntiScamFilter/FsAntiScamFilter/x64/**
 *.idb
 *.ilk
-*.idb
-*.idb
-*.idb
 FsAntiScamFilter/FsAntiScamFilter/RCb05116
 FsAntiScamFilter/FsAntiScamFilter/RCa05116
+.idea/**
+**\.idea
