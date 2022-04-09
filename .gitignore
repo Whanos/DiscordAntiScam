@@ -51,3 +51,10 @@ FsAntiScamFilter/FsAntiScamFilter/RCb05116
 FsAntiScamFilter/FsAntiScamFilter/RCa05116
 .idea/**
 **\.idea
+sdv/**
+*.sdv
+**/sdv/**
+FsAntiScamFilter/FsAntiScamFilter/smvstats.txt
+FsAntiScamFilter/FsAntiScamFilter/SDV-default.xml
+FsAntiScamFilter/FsAntiScamFilter/runsdvui.cmd
+FsAntiScamFilterx64/Release/**

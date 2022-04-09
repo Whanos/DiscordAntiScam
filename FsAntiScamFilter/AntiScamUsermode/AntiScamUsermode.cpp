@@ -131,7 +131,7 @@ void CheckForNewKernelMessages() {
 void RunCommandFromKernel(std::string KernelMessage) {
     // Filter wanted a messagebox created
     if (KernelMessage.find("FILTER_CREATE_MESSAGE_BOX") != std::string::npos) {
-        std::string message = KernelMessage.substr(26);
+        std::string message = KernelMessage.substr(27);
         std::wstring messageWstr = std::wstring(message.begin(), message.end());
         LPCWSTR mBoxMessage = messageWstr.c_str(); // Get string *after* the message
         MessageBox(NULL,
@@ -140,12 +140,16 @@ void RunCommandFromKernel(std::string KernelMessage) {
             MB_OK);
     }
     if (KernelMessage.find("FILTER_STANDARD_LOG") != std::string::npos) {
-        std::string message = KernelMessage.substr(19);
-        printf("[NORMAL] %s", message.c_str());
+        std::string message = KernelMessage.substr(20);
+        printf("[NORMAL] %s\n", message.c_str());
     }
     if (KernelMessage.find("FILTER_WARNING_LOG") != std::string::npos) {
-        std::string message = KernelMessage.substr(18);
-        printf("[WARNING] %s", message.c_str());
+        std::string message = KernelMessage.substr(19);
+        printf("[WARNING] %s\n", message.c_str());
+    }
+    if (KernelMessage.find("FILTER_INTRUSION_ATTEMPT") != std::string::npos) {
+        std::string message = KernelMessage.substr(25);
+        printf("![INTRUSION]! %s\n", message.c_str());
     }
     // error log
     // settings
