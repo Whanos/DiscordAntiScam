@@ -235,7 +235,7 @@ NTSTATUS FsFilterUnload(FLT_FILTER_UNLOAD_FLAGS Flags) {
 }
 
 NTSTATUS FsAntiScamConnect(
-    PFLT_PORT ClientPort, 
+    PFLT_PORT ClientPort,
     PVOID ServerPortCookie, 
     PVOID Context, 
     ULONG ContextSize, 
