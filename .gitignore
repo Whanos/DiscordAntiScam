@@ -58,3 +58,5 @@ FsAntiScamFilter/FsAntiScamFilter/smvstats.txt
 FsAntiScamFilter/FsAntiScamFilter/SDV-default.xml
 FsAntiScamFilter/FsAntiScamFilter/runsdvui.cmd
 FsAntiScamFilterx64/Release/**
+FsAntiScamFilter/AntiScamUsermode/x64/**
+FsAntiScamFilter/packages/**

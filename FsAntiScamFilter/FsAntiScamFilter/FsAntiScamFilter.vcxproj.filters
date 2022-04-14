@@ -27,6 +27,9 @@
     <ClCompile Include="FsAntiScamFilter.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Filters.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="FsAntiScamFilter.rc">
@@ -40,8 +43,8 @@
     <ClInclude Include="DriverHeaders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
+    <ClInclude Include="Filters.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -109,7 +109,7 @@ int main()
     bool isRunning = true;
     while (isRunning) {
         CheckForNewKernelMessages();
-        // std::this_thread::sleep_for(std::chrono::seconds(10)); // We don't need to spam the kernel.
+        std::this_thread::sleep_for(std::chrono::seconds(1)); // We don't need to spam the kernel.
     }
     return 0;
 }
@@ -117,11 +117,15 @@ int main()
 void CheckForNewKernelMessages() {
     PCHAR Command = "FILTER_GET_NEW_MESSAGES";
     DWORD BytesReceivers = 0;
-    char ReceiverBuffer[500] = { 0 };
-    HRESULT message = FilterSendMessage(Port, Command, strlen(Command), ReceiverBuffer, 500, &BytesReceivers);
+    char ReceiverBuffer[512] = { 0 };
+    HRESULT message = FilterSendMessage(Port, Command, strlen(Command), ReceiverBuffer, 512, &BytesReceivers);
     if (IS_ERROR(message)) {
         printf("Error sending command to filter! Error: 0x%08x\n", message);
     }
+    for (int i = 0; i < strlen(ReceiverBuffer); i++) {
+        std::cout << ReceiverBuffer[i];
+    }
+    printf("\n");
     std::string kernelMessage(ReceiverBuffer);
     printf("Kernel said: %s\n", kernelMessage.c_str());
     RunCommandFromKernel(kernelMessage);
