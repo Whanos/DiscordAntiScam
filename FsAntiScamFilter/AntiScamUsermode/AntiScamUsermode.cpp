@@ -27,19 +27,15 @@ public:
         switch (state) {
         case UserCanceled:
             std::wcout << L"The user dismissed this toast" << std::endl;
-            exit(1);
             break;
         case TimedOut:
             std::wcout << L"The toast has timed out" << std::endl;
-            exit(2);
             break;
         case ApplicationHidden:
             std::wcout << L"The application hid the toast using ToastNotifier.hide()" << std::endl;
-            exit(3);
             break;
         default:
             std::wcout << L"Toast not activated" << std::endl;
-            exit(4);
             break;
         }
     }
@@ -118,7 +114,7 @@ void CheckForNewKernelMessages() {
     PCHAR Command = "FILTER_GET_NEW_MESSAGES";
     DWORD BytesReceivers = 0;
     char ReceiverBuffer[512] = { 0 };
-    HRESULT message = FilterSendMessage(Port, Command, strlen(Command), ReceiverBuffer, 512, &BytesReceivers);
+    HRESULT message = FilterSendMessage(Port, Command, strlen(Command) + 1, ReceiverBuffer, 512, &BytesReceivers);
     if (IS_ERROR(message)) {
         printf("Error sending command to filter! Error: 0x%08x\n", message);
     }

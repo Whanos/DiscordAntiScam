@@ -36,6 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="FsAntiScamFilter.rc" />
+    <ClCompile Include="Communication.c" />
     <ClCompile Include="Filters.c" />
     <ClCompile Include="FsAntiScamFilter.c" />
     <Inf Include="FsAntiScamFilter.inf" />
@@ -214,6 +215,7 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Communication.h" />
     <ClInclude Include="DriverHeaders.h" />
     <ClInclude Include="FilterCommunication.h" />
     <ClInclude Include="Filters.h" />

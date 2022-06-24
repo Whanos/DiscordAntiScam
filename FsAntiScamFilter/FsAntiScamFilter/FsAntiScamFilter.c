@@ -16,6 +16,7 @@ Environment:
 
 #include "DriverHeaders.h"
 #include "FilterCommunication.h"
+#include "Communication.h"
 // Includes from other files
 #include "Filters.h"
 
@@ -80,18 +81,6 @@ VOID FsAntiScamDisconnect(
     FltCloseClientPort(
         FilterHandle,
         &ClientPortGlobal);
-}
-
-NTSTATUS FsAntiScamMessageReceived(
-    PVOID PortCookie, 
-    PVOID InputBuffer, 
-    ULONG InputBufferLength, 
-    PVOID OutputBuffer, 
-    ULONG OutputBufferLength, 
-    PULONG ReturnBufferLength
-) {
-    PCHAR ApplicationMessage = (PCHAR)InputBuffer;
-    return STATUS_SUCCESS;
 }
 
 // Entry point for the minifilter.
